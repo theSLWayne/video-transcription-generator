@@ -125,3 +125,71 @@ def speaker_clustering(audio):
 
     return labelling
 
+def generate_transcript_from_audio(path:str, remove_audio_file: bool = False) -> list:
+    """
+    
+    Generator function - this will be the access point
+
+    Args:
+        path: Path of the audio file. Must be a valid path.
+        remove_audio_file: Whether to delete the audio file 
+                mentioned by 'path' after transcript generation
+
+    Returns:
+        Transcripts as a list of strings
+    """
+
+    # Preprocess audio
+    audio = preprocess(audio_file_path=path)
+
+    # Speaker cluster details
+    speaker_clusters = speaker_clustering(audio)
+
+    print(
+        f"{len(speaker_clusters)} different speech segments by {len(list(set([i[0] for i in speaker_clusters])))} speakers were detected."
+    )
+
+    transcriptions = []
+
+    # Generate transcriptions for each speech segment
+    for speaker, st, et in speaker_clusters:
+        # Extract sublcip from complete audio file
+        ffmpeg_extract_subclip(TMP_AUDIO_PATH, st, et, targetname="segment.wav")
+
+        # Read the audio segment
+        rate, segment_audio = read("segment.wav")
+
+        # Instantiate speech-to-text model
+        model = Speech2TextForConditionalGeneration.from_pretrained(
+            "facebook/s2t-small-librispeech-asr"
+        )
+
+        # Instantiate speech-to-text preprocessor
+        processor = Speech2TextProcessor.from_pretrained(
+            "facebook/s2t-small-librispeech-asr"
+        )
+
+        # Preprocess audio for the model
+        inputs = processor(segment_audio, sampling_rate=rate, return_tensors="pt")
+        generated_ids = model.generate(
+            inputs["input_features"], attention_mask=inputs["attention_mask"]
+        )
+
+        # Take predictions from speech-to-text model
+        transcription = processor.batch_decode(generated_ids, skip_special_tokens=True)
+
+        transcriptions.append(f"Speaker {speaker}: {transcription[0]}\n")
+
+    # Write transcripts to file
+    with open("transcript.txt", "w") as f:
+        f.writelines(transcriptions)
+
+    print("Generated Transcript was successfully saved at 'transcript.txt'.")
+
+    # Delete created temporary files
+    os.remove(TMP_AUDIO_PATH)
+    os.remove("segment.wav")
+    if remove_audio_file:
+        os.remove(path)
+
+    return transcriptions
