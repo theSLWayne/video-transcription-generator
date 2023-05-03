@@ -16,6 +16,8 @@ from scipy.io.wavfile import write, read
 import numpy as np
 from transformers import Speech2TextProcessor, Speech2TextForConditionalGeneration
 
+TMP_AUDIO_PATH = "preprocessed.wav"
+
 def extract_audio(
     path: str, audio_path: str, save: bool = False
 ) -> Union[AudioFileClip, str]:
@@ -49,3 +51,24 @@ def extract_audio(
         return audio_fname
     else:
         return audio
+    
+def preprocess(audio_file_path: str) -> np.ndarray:
+    """
+
+    Preprocess the audio - removes background noise and remove non-speaking segments in the audio
+
+    Args:
+        audio_file_path: File path of the audio file
+
+    Returns:
+        Preprocessed audio as a numpy ndarray
+    """
+
+    # Load the audio and preprocess
+    wav_fpath = Path(audio_file_path)
+    wav = preprocess_wav(wav_fpath)
+
+    # Write the preprocessed audio file to disk
+    write(TMP_AUDIO_PATH, sampling_rate, wav)
+
+    return wav
