@@ -129,7 +129,9 @@ def speaker_clustering(audio):
     return labelling
 
 
-def generate_transcript_from_audio(path: str, remove_audio_file: bool = False) -> list:
+def generate_transcript_from_audio(
+    path: str, save_path: str, remove_audio_file: bool = False
+) -> list:
     """
 
     Generator function - this will be the access point
@@ -185,7 +187,7 @@ def generate_transcript_from_audio(path: str, remove_audio_file: bool = False) -
         transcriptions.append(f"Speaker {speaker}: {transcription[0]}\n")
 
     # Write transcripts to file
-    with open("transcript.txt", "w") as f:
+    with open(save_path, "w") as f:
         f.writelines(transcriptions)
 
     print("Generated Transcript was successfully saved at 'transcript.txt'.")
