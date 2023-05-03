@@ -18,6 +18,7 @@ from transformers import Speech2TextProcessor, Speech2TextForConditionalGenerati
 
 TMP_AUDIO_PATH = "preprocessed.wav"
 
+
 def extract_audio(
     path: str, audio_path: str, save: bool = False
 ) -> Union[AudioFileClip, str]:
@@ -30,7 +31,7 @@ def extract_audio(
         audio_path: Path to save the audio file. Must be a valid path
         save: Whether to save the audio or not. Optional. Defaulted to False
 
-    Returns: 
+    Returns:
         Extracted audio if save=False, else path of the saved audio file as a string
     """
 
@@ -51,7 +52,8 @@ def extract_audio(
         return audio_fname
     else:
         return audio
-    
+
+
 def preprocess(audio_file_path: str) -> np.ndarray:
     """
 
@@ -72,6 +74,7 @@ def preprocess(audio_file_path: str) -> np.ndarray:
     write(TMP_AUDIO_PATH, sampling_rate, wav)
 
     return wav
+
 
 def create_labelling(labels, wav_splits):
     """
@@ -125,14 +128,15 @@ def speaker_clustering(audio):
 
     return labelling
 
-def generate_transcript_from_audio(path:str, remove_audio_file: bool = False) -> list:
+
+def generate_transcript_from_audio(path: str, remove_audio_file: bool = False) -> list:
     """
-    
+
     Generator function - this will be the access point
 
     Args:
         path: Path of the audio file. Must be a valid path.
-        remove_audio_file: Whether to delete the audio file 
+        remove_audio_file: Whether to delete the audio file
                 mentioned by 'path' after transcript generation
 
     Returns:
