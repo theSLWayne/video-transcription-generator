@@ -72,3 +72,56 @@ def preprocess(audio_file_path: str) -> np.ndarray:
     write(TMP_AUDIO_PATH, sampling_rate, wav)
 
     return wav
+
+def create_labelling(labels, wav_splits):
+    """
+
+    Labelling speakers. Identifies what speaker spoke at which time using cluster embeddings
+
+    Args:
+        labels: Labels of each speach segment which defines what speaker spoke at that specific segment
+        wav_splits: Splits taken from voice encoder model
+
+    Returns:
+        Labels of speaker, start time(s), end time(s) of each segment
+    """
+
+    times = [((s.start + s.stop) / 2) / sampling_rate for s in wav_splits]
+    labelling = []
+    start_time = 0
+
+    for i, time in enumerate(times):
+        if i > 0 and labels[i] != labels[i - 1]:
+            temp = [str(labels[i - 1]), start_time, time]
+            labelling.append(tuple(temp))
+            start_time = time
+        if i == len(times) - 1:
+            temp = [str(labels[i]), start_time, time]
+            labelling.append(tuple(temp))
+
+    return labelling
+
+
+def speaker_clustering(audio):
+    """
+
+    Clustering speakers to identify which speaker spoke at specific times in the audio clip
+    """
+
+    # Instantiate the VoiceEncoder model and take predictions for embeddings
+    encoder = VoiceEncoder("cpu")
+    _, cont_embeds, wav_splits = encoder.embed_utterance(
+        audio, return_partials=True, rate=16
+    )
+
+    # Cluster similar embeddings together using SpectralClusterer
+    clusterer = SpectralClusterer(min_clusters=2, max_clusters=100)
+
+    # Generate labels
+    labels = clusterer.predict(cont_embeds)
+
+    # Map speaker labels with clip start and end times
+    labelling = create_labelling(labels, wav_splits)
+
+    return labelling
+
